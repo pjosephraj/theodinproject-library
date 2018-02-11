@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="assets/semantic.min.css">
+  <title>The Odin Project - Library</title>
+  <style>
+    html, body{
+      background: #dcf0f0;
+    }
+    body{
+      height: initial;
+    }
+    .container{
+      margin-top: 10px;
+    }
+    .title{
+      color: #555 !important;
+    }
+    .ui.cards{
+      margin: 0;
+      flex-flow: row wrap;
+      justify-content: center;
+    }
+    .close-icon{
+      top: 10px !important;
+      right: 10px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="ui container">
+    <div class="row">
+        <h2 class="ui header title">Project: Library</h2>
+        <div class="ui right floated green button js-add-book" style="margin-top: -45px;" title="Delete Book">
+            <i class="add icon"></i>
+             Add Book
+        </div>
+    </div>
+    <div class="ui center aligned cards" id="cards">
+      
+    </div>
+  </div>
+  <div class="ui modal">
+    <i class="close red icon close-icon"></i>
+    <div class="header">Add Book</div>
+    <div class="content">
+      <form action="" class="ui form" id="js-submit-book">
+        <div class="field">
+          <label for="book-title">Title</label>
+          <input type="text" name="book-title" id="book-title" placeholder="Book Title..." required>
+        </div>
+        <div class="field">
+          <label for="book-author">Author/s</label>
+          <input type="text" name="book-author" id="book-author" placeholder="Book Author/s" required>
+        </div>
+        <div class="field">
+          <label for="book-pages">No. of pages</label>
+          <input type="number" name="book-pages" id="book-pages" placeholder="Total No. Pages" required>
+        </div>
+        <div class="inline field">
+          <div class="ui toggle checkbox">
+            <input type="checkbox" tabindex="0" class="hidden" id="book-read" name="book-read">
+            <label for="book-read">Read this book</label>
+          </div>
+        </div>
+        <div style="text-align: right;">
+            <button type="submit" class="ui primary button">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script src="assets/jquery.min.js"></script>
+  
+  <script src="assets/semantic.min.js"></script>
+  <script>
+    const $cards = document.querySelector('#cards');
+    const $addBook = document.querySelector('.js-add-book');
+    // const $submitBook = document.querySelector('.js-submit-book');
+    const $submitBook = document.querySelector('#js-submit-book');
+    let library = [];
+    let bookId = 0;
+
+    init();
+
+    function Book(title, author, pages, read){
+      this.id = ++bookId;
+      this.title = title;
+      this.author = author;
+      this.pages = pages;
+      this.read = read;
+    }
+
+
+    function submitBook(e){
+      e.preventDefault();
+      const values = e.target.elements;
+      let title = $('#book-title');
+      let author = $('#book-author');
+      let pages = $('#book-pages');
+      let read = $('#book-read')[0];
+      library.push(new Book(title.val(), author.val(), pages.val(), read.checked ));
+      title.val('') ;
+      author.val('');
+      pages.val('');
+      read.checked = false;
+      loadDOM();
+      $('.ui.modal').modal('hide');
+    }
+
+    function cardClicked(e){
+      let id = e.target.dataset['id'];
+      if(e.target.className.includes('js-toggle-read')){
+        library.map(book => {
+          if(book.id == id){ book.read = !book.read; }
+        });
+      }else if(e.target.className.includes('js-del-book')){
+        library = library.filter( book => book.id != id);
+      }else{
+        return;
+      }
+      loadDOM();
+    }
+
+    function loadDOM(){
+      window.localStorage.library = JSON.stringify(library);
+      $cards.innerHTML = (library.map(book => book.bookHTML())).join('');
+    }
+    
+    function init(){
+      Book.prototype.bookHTML = function(){
+        return `<div class="card">
+                  <div class="content">
+                    <i class="red large remove icon link right floated js-del-book" data-id="${this.id}" title="Delete Book"></i>
+                    <div class="header">
+                      ${this.title}
+                    </div>
+                    <div class="meta">
+                      ${this.author}
+                    </div>
+                    <div class="meta">
+                      ${this.pages} Pages
+                    </div>
+                  </div>
+                  <div class="ui bottom attached ${this.read ? 'primary' : 'orange'} button js-toggle-read" data-id="${this.id}">
+                    ${this.read ? 'Read' : 'Not Read'}
+                  </div>
+                </div>`;
+      }
+
+      if(window.localStorage.library){
+        library = JSON.parse(window.localStorage.library).map( book =>  new Book(book.title, book.author, book.pages, book.read));
+      }else{
+        library.push(new Book('Javascript: The Good Parts', 'Crockford and Douglas', 186, false));
+        library.push(new Book('JavaScript: The Complete Reference', 'Thomas Powell,‎ Fritz Schneider ', 976, false));
+        library.push(new Book('Learning JavaScript', 'Brown, Ethan ', 346, false));
+      }
+      loadDOM();
+    }
+    
+    $cards.addEventListener('click', cardClicked);
+    $addBook.addEventListener('click', () => { 
+      $('.ui.modal').modal('show');
+    });
+    $submitBook.addEventListener('submit', submitBook);
+  </script>
+</body>
+</html>
